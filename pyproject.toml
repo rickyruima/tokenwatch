@@ -1,0 +1,24 @@
+[project]
+name = "tokenwatch"
+version = "0.1.0"
+description = "htop for LLM spend — local cost anomaly detection and attribution"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "click>=8.0",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+tui = ["textual>=0.40"]
+duckdb = ["duckdb>=0.10"]
+
+[project.scripts]
+tw = "tokenwatch.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tokenwatch"]

@@ -8,7 +8,7 @@ from typing import Any, Optional
 from .models import UsageRecord
 from .pricing import calculate_cost
 from .storage import Storage
-from .wrapper import WrappedOpenAIClient
+from .wrapper import WrappedAnthropicClient, WrappedOpenAIClient
 
 
 class TokenWatch:
@@ -26,15 +26,18 @@ class TokenWatch:
     def wrap(self, client: Any) -> Any:
         """Wrap an LLM client to transparently record usage.
 
-        Currently supports OpenAI clients. The openai package does not
+        Supports OpenAI and Anthropic clients. The respective packages do not
         need to be installed — we duck-type the client.
         """
         # Check if it looks like an OpenAI client (has chat.completions)
         if hasattr(client, "chat") and hasattr(client.chat, "completions"):
             return WrappedOpenAIClient(client, self._record)
+        # Check if it looks like an Anthropic client (has messages.create)
+        if hasattr(client, "messages") and hasattr(client.messages, "create"):
+            return WrappedAnthropicClient(client, self._record)
         raise TypeError(
             f"Unsupported client type: {type(client).__name__}. "
-            "Currently only OpenAI clients are supported."
+            "Currently only OpenAI and Anthropic clients are supported."
         )
 
     def record(

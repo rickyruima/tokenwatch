@@ -1,6 +1,6 @@
 """Pydantic data models for TokenWatch."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import uuid4
 
@@ -11,7 +11,7 @@ class UsageRecord(BaseModel):
     """A single LLM API usage event."""
 
     id: str = Field(default_factory=lambda: uuid4().hex)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
     model: str
     provider: str  # "openai" | "anthropic"
     input_tokens: int

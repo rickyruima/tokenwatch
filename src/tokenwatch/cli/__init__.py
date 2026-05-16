@@ -1,7 +1,7 @@
 """TokenWatch CLI — tw command."""
 
 import click
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -25,7 +25,7 @@ def get_storage() -> Storage:
 
 def parse_period(period: str) -> datetime:
     """Parse a period string like '7d', '30d', 'today' into a start datetime."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if period == "today":
         return now.replace(hour=0, minute=0, second=0, microsecond=0)
     if period.endswith("d"):
@@ -49,7 +49,7 @@ def report(period: Optional[str]):
     """Show spending summary."""
     storage = get_storage()
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Show today, 7d, 30d summaries
@@ -107,7 +107,7 @@ def report(period: Optional[str]):
 def top(dimension: str, period: str, limit: int):
     """Show top spenders by dimension."""
     storage = get_storage()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     start = parse_period(period)
 
     if dimension == "model":
@@ -142,3 +142,44 @@ def top(dimension: str, period: str, limit: int):
         )
 
     console.print(table)
+
+
+@main.command()
+@click.option("--days", default=7, help="Number of days to show (default: 7)")
+def trend(days: int):
+    """Show daily spending trend as an ASCII chart."""
+    storage = get_storage()
+    now = datetime.now(UTC)
+    start = now - timedelta(days=days)
+
+    daily_costs = storage.get_daily_costs(start, now)
+
+    if not daily_costs:
+        console.print("[dim]No usage data for this period.[/dim]")
+        return
+
+    # Build a dict of day -> cost
+    cost_by_day: dict[str, float] = {}
+    for row in daily_costs:
+        cost_by_day[row["day"]] = row["total_cost"]
+
+    # Generate all days in range
+    all_days: list[str] = []
+    for i in range(days):
+        day = (now - timedelta(days=days - 1 - i)).strftime("%Y-%m-%d")
+        all_days.append(day)
+
+    values = [cost_by_day.get(day, 0.0) for day in all_days]
+    max_val = max(values) if values else 0.0
+
+    console.print(f"\n[bold]Daily spend (last {days} days)[/bold]\n")
+
+    chart_width = 40
+    for day, val in zip(all_days, values):
+        bar_len = int((val / max_val) * chart_width) if max_val > 0 else 0
+        bar = "\u2588" * bar_len
+        short_day = day[5:]  # MM-DD
+        console.print(f"  {short_day} | {bar} ${val:.4f}")
+
+    total = sum(values)
+    console.print(f"\n  [bold]Total:[/bold] [green]${total:.4f}[/green]")

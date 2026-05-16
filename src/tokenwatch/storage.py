@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -85,7 +85,7 @@ class Storage:
     ) -> list[UsageRecord]:
         """Query records within a time period."""
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(UTC)
         conn = self._get_conn()
         cursor = conn.execute(
             "SELECT * FROM events WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC",
@@ -98,7 +98,7 @@ class Storage:
     ) -> list[dict]:
         """Get cost summary grouped by model."""
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(UTC)
         conn = self._get_conn()
         cursor = conn.execute(
             """SELECT model, SUM(cost_usd) as total_cost, COUNT(*) as request_count,
@@ -114,7 +114,7 @@ class Storage:
     ) -> list[dict]:
         """Get cost summary grouped by caller."""
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(UTC)
         conn = self._get_conn()
         cursor = conn.execute(
             """SELECT caller, SUM(cost_usd) as total_cost, COUNT(*) as request_count,
@@ -130,13 +130,28 @@ class Storage:
     ) -> float:
         """Get total cost for a period."""
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(UTC)
         conn = self._get_conn()
         cursor = conn.execute(
             "SELECT COALESCE(SUM(cost_usd), 0.0) FROM events WHERE timestamp >= ? AND timestamp <= ?",
             (period_start.isoformat(), period_end.isoformat()),
         )
         return cursor.fetchone()[0]
+
+    def get_daily_costs(
+        self, period_start: datetime, period_end: Optional[datetime] = None
+    ) -> list[dict]:
+        """Get daily cost totals for a period."""
+        if period_end is None:
+            period_end = datetime.now(UTC)
+        conn = self._get_conn()
+        cursor = conn.execute(
+            """SELECT DATE(timestamp) as day, SUM(cost_usd) as total_cost
+               FROM events WHERE timestamp >= ? AND timestamp <= ?
+               GROUP BY DATE(timestamp) ORDER BY day""",
+            (period_start.isoformat(), period_end.isoformat()),
+        )
+        return [dict(row) for row in cursor.fetchall()]
 
     def _row_to_record(self, row: sqlite3.Row) -> UsageRecord:
         """Convert a database row to a UsageRecord."""

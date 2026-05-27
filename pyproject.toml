@@ -1,8 +1,8 @@
 [project]
 name = "tokenwatch"
-version = "0.1.0"
+version = "0.3.0"
 description = "htop for LLM spend — local cost anomaly detection and attribution"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
     "click>=8.0",

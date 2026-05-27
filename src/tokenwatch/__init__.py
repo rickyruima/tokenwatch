@@ -1,6 +1,6 @@
 """TokenWatch — htop for LLM spend. Local cost anomaly detection and attribution."""
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 from pathlib import Path
 from typing import Any, Optional

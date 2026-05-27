@@ -1,42 +1,62 @@
 # TokenWatch
 
-> htop for LLM spend. See where your tokens go, catch anomalies locally.
+> htop for LLM spend. See where your tokens go — locally, with zero accounts.
 
-Local-first LLM cost anomaly detection and attribution. Zero infrastructure, zero accounts, `pip install` and go.
+Local-first LLM cost tracking and attribution. Wrap your OpenAI/Anthropic
+client and every call is recorded to a local SQLite DB. `pip install` and go —
+no infrastructure, no accounts, nothing leaves your machine.
+
+## Install
+
+```bash
+pip install tokenwatch
+```
 
 ## Quick Start
+
+Wrap your client once; usage is recorded automatically:
 
 ```python
 from tokenwatch import TokenWatch
 import openai
 
-tw = TokenWatch()  # data stays on your machine
-client = tw.wrap(openai.OpenAI())
+tw = TokenWatch()                      # data stays on your machine
+client = tw.wrap(openai.OpenAI())      # OpenAI or Anthropic
 
-response = client.chat.completions.create(
+client.chat.completions.create(
     model="gpt-4",
     messages=[...],
-    metadata={"customer_id": "cust_123", "feature": "chat"}
+    metadata={"feature": "chat"},      # optional tags for attribution
 )
 ```
 
-```bash
-$ tw report
-Today: $42.13 (↑12% vs yesterday)
-  gpt-4-turbo   $28.40  (67%)
-  claude-3-opus  $11.20  (27%)
+Then inspect spend from the CLI:
 
-$ tw check
-🚨 Spike: feature=agent_chat cost $312 in last hour (baseline: $42)
+```bash
+$ tw report                 # spend over today / 7d / 30d
+$ tw top --by model         # biggest spenders by model
+$ tw top --by caller        # ...or by which code called the API
+$ tw trend --days 7         # daily spend as an ASCII chart
 ```
 
-## Architecture
+Attribution is automatic: the caller is inferred from the call stack, and any
+`metadata={...}` you pass is stored as tags.
 
-- **SDK**: Python, wraps OpenAI/Anthropic clients
-- **Storage**: Local SQLite (~/.tokenwatch/usage.db)
-- **CLI**: `tw report`, `tw top`, `tw check`, `tw watch`, `tw query`
-- **Anomaly detection**: Statistical (z-score, EWMA, percentile) — no ML, no cloud
+## How it works
+
+- **SDK** — duck-typed wrappers for OpenAI & Anthropic clients (the provider packages don't even need to be installed)
+- **Storage** — local SQLite at `~/.tokenwatch/usage.db`
+- **CLI** — `tw report`, `tw top`, `tw trend`
+- **Pricing** — built-in per-model cost table; or pass `cost_usd` to `record()` yourself
 
 ## Status
 
-Pre-development. See `PRD.md`.
+**v0.1 — cost tracking & attribution are stable** (43 passing tests).
+
+Anomaly detection (spending spikes / `tw check`) is on the roadmap, not yet
+shipped. The tagline's "catch anomalies" half is the next milestone, not a
+current feature — this README documents only what works today.
+
+## License
+
+MIT

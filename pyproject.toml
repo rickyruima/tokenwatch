@@ -1,8 +1,21 @@
 [project]
 name = "tokenwatch"
 version = "0.3.0"
-description = "htop for LLM spend — local cost anomaly detection and attribution"
+description = "htop for LLM spend — local cost tracking, attribution, and anomaly detection"
+readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
+authors = [{ name = "Ricky Ma", email = "ricky.rui.ma@gmail.com" }]
+keywords = ["llm", "openai", "anthropic", "cost", "observability", "finops", "tokens"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Monitoring",
+]
 dependencies = [
     "pydantic>=2.0",
     "click>=8.0",
@@ -10,9 +23,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-tui = ["textual>=0.40"]
-duckdb = ["duckdb>=0.10"]
 dev = ["pytest>=7.0", "pytest-cov>=4.0"]
+
+[project.urls]
+Homepage = "https://github.com/rickyruima/tokenwatch"
+Repository = "https://github.com/rickyruima/tokenwatch"
+Issues = "https://github.com/rickyruima/tokenwatch/issues"
 
 [project.scripts]
 tw = "tokenwatch.cli:main"

@@ -8,6 +8,7 @@ from typing import Optional
 from rich.console import Console
 from rich.table import Table
 
+from ..anomaly import detect_spikes
 from ..storage import Storage, DEFAULT_DB_PATH
 
 
@@ -183,3 +184,30 @@ def trend(days: int):
 
     total = sum(values)
     console.print(f"\n  [bold]Total:[/bold] [green]${total:.4f}[/green]")
+
+
+@main.command()
+@click.option("--days", default=30, help="Baseline window in days (default: 30)")
+@click.option("--threshold", default=2.0, help="Z-score above which a day is a spike (default: 2.0)")
+def check(days: int, threshold: float):
+    """Flag days whose spend spikes above the recent baseline."""
+    storage = get_storage()
+    now = datetime.now(UTC)
+    daily_costs = storage.get_daily_costs(now - timedelta(days=days), now)
+
+    if not daily_costs:
+        console.print("[dim]No usage data to analyze yet.[/dim]")
+        return
+
+    series = [(row["day"], row["total_cost"]) for row in daily_costs]
+    spikes = detect_spikes(series, threshold=threshold)
+
+    if not spikes:
+        console.print("[green]No spending anomalies detected.[/green]")
+        return
+
+    for a in spikes:
+        console.print(
+            f"\U0001f6a8 [bold red]Spike[/bold red] on {a.period}: "
+            f"[bold]${a.value:.2f}[/bold] vs baseline ${a.baseline:.2f}"
+        )

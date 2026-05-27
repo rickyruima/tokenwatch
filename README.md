@@ -37,6 +37,7 @@ $ tw report                 # spend over today / 7d / 30d
 $ tw top --by model         # biggest spenders by model
 $ tw top --by caller        # ...or by which code called the API
 $ tw trend --days 7         # daily spend as an ASCII chart
+$ tw check                  # flag days whose spend spikes above baseline
 ```
 
 Attribution is automatic: the caller is inferred from the call stack, and any
@@ -46,16 +47,17 @@ Attribution is automatic: the caller is inferred from the call stack, and any
 
 - **SDK** — duck-typed wrappers for OpenAI & Anthropic clients (the provider packages don't even need to be installed)
 - **Storage** — local SQLite at `~/.tokenwatch/usage.db`
-- **CLI** — `tw report`, `tw top`, `tw trend`
+- **CLI** — `tw report`, `tw top`, `tw trend`, `tw check`
 - **Pricing** — built-in per-model cost table; or pass `cost_usd` to `record()` yourself
+- **Anomaly detection** — `tw check` flags days whose spend spikes above the recent baseline (z-score, local, no ML, no cloud)
 
 ## Status
 
-**v0.1 — cost tracking & attribution are stable** (43 passing tests).
+**v0.1 — cost tracking, attribution, and daily anomaly detection are stable** (51 passing tests).
 
-Anomaly detection (spending spikes / `tw check`) is on the roadmap, not yet
-shipped. The tagline's "catch anomalies" half is the next milestone, not a
-current feature — this README documents only what works today.
+`tw check` currently detects **daily** spending spikes. Finer-grained
+detection (per-hour, per-tag/feature) is the next milestone — this README
+documents only what works today.
 
 ## License
 
